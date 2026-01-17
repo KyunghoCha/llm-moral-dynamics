@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.config import (
     Condition, SCENARIO_TROLLEY, SCENARIO_SELFDRIVING, SCENARIO_TROLLEY_BALANCED,
+    SCENARIO_ORGAN, SCENARIO_AI_RIGHTS,
     NUM_AGENTS, NUM_ROUNDS, InitialStanceMode
 )
 from src.experiment import ExperimentConfig, Experiment
@@ -40,6 +41,22 @@ QUICK_CONFIG = {
         Condition.C4_PURE_INFO,
     ],
     "scenarios": [SCENARIO_TROLLEY],
+}
+
+# Exploration configuration (Broad sweep of other scenarios)
+EXPLORATION_CONFIG = {
+    "num_agents": 20,
+    "num_rounds": 8,
+    "seeds_per_condition": 1,
+    "conditions": [
+        Condition.C1_FULL,        # Full Pressure
+        Condition.C4_PURE_INFO,   # Pure Logic
+    ],
+    "scenarios": [
+        SCENARIO_SELFDRIVING,   # S3: Tech Ethics
+        SCENARIO_ORGAN,         # S2: High Moral Stakes
+        SCENARIO_AI_RIGHTS,     # S8: Meta-Cognition
+    ],
 }
 
 # Full experiment configuration
@@ -322,6 +339,7 @@ def parse_args():
     group.add_argument("--thesis", action="store_true", help="Thesis run (50 agents, 15 rounds, 10 seeds, Balanced)")
     group.add_argument("--thesis-lite", action="store_true", help="Thesis run Lite (30 agents, 10 rounds, 3 seeds)")
     group.add_argument("--golden", action="store_true", help="Golden Batch (30 agents, 15 rounds, 30 seeds, Paper-level)")
+    group.add_argument("--exploration", action="store_true", help="Explore new scenarios (S2, S3, S8) quickly")
     
     parser.add_argument("--estimate", action="store_true", help="Only show runtime estimate")
     parser.add_argument("--initial-mode", type=str, choices=["none", "enforced", "soft"], 
@@ -346,6 +364,9 @@ def main():
     elif args.golden:
         config = GOLDEN_CONFIG
         mode = "GOLDEN BATCH"
+    elif args.exploration:
+        config = EXPLORATION_CONFIG
+        mode = "EXPLORATION (S2, S3, S8)"
     elif args.medium:
         config = MEDIUM_CONFIG
         mode = "MEDIUM"
@@ -376,7 +397,18 @@ def main():
     else:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         mode_suffix = f"_{initial_mode_str}" if initial_stance_mode != InitialStanceMode.NONE else ""
-        batch_id = f"{timestamp}{mode_suffix}"
+        
+        # Add scenario summary to batch ID if few scenarios
+        scenarios = config.get("scenarios", [])
+        if len(scenarios) == 1:
+            scenario_tag = scenarios[0].id
+        elif len(scenarios) <= 3:
+            # e.g. S2_S3_S8
+            scenario_tag = "_".join(s.id.split('_')[0] for s in scenarios)
+        else:
+            scenario_tag = "MULTI_SCENARIO"
+            
+        batch_id = f"{timestamp}_{scenario_tag}{mode_suffix}"
         print(f"\nStarting {mode} mode experiments...")
         print(f"Batch ID: {batch_id}")
     print(f"Initial Stance Mode: {initial_stance_mode.value}")

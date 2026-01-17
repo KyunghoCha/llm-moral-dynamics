@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Research Report: Phase 1 Trolley Problem Dynamics</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #000;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 0.3em;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .quote {
+            background: #f9f9f9;
+            border-left: 4px solid #555;
+            padding: 10px;
+            font-style: italic;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .metadata {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .note {
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Research Report: Phase 1 Trolley Problem Dynamics</h1>
+    <p><strong>Date:</strong> 2026-01-17<br>
+        <strong>Project:</strong> Echoes of Error<br>
+        <strong>Subject:</strong> Quantitative Analysis of Opinion Collapse in Multi-Agent Systems
+    </p>
+
+    <h2>1. Methodology and Experimental Setup</h2>
+    <p>This report summarizes the factual outcomes of 115 simulation runs using Large Language Model (LLM) agents.</p>
+
+    <ul>
+        <li><strong>Scenario:</strong> S1_TROLLEY_BALANCED (Initial bias set to 0.50)</li>
+        <li><strong>Population:</strong> 30 Agents per simulation</li>
+        <li><strong>Duration:</strong> 15 Rounds</li>
+        <li><strong>Model:</strong> Mistral (via Ollama)</li>
+        <li><strong>Total Runs:</strong> 115 (across 5 conditions)</li>
+    </ul>
+
+    <h3>Conditions</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Condition</th>
+                <th>Description</th>
+                <th>Visible Information</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>C0 (Independent)</td>
+                <td>Control Group</td>
+                <td>None (Self-reflection only)</td>
+            </tr>
+            <tr>
+                <td>C1 (Full Info)</td>
+                <td>Maximum Social Pressure</td>
+                <td>ID + Stance + Rationale + Global Stats</td>
+            </tr>
+            <tr>
+                <td>C2 (Stance Only)</td>
+                <td>Authority/Conformity</td>
+                <td>ID + Stance + Global Stats (No Rationale)</td>
+            </tr>
+            <tr>
+                <td>C3 (Anon Bandwagon)</td>
+                <td>Anonymous Stats</td>
+                <td>Stance + Rationale + Global Stats (No ID)</td>
+            </tr>
+            <tr>
+                <td>C4 (Pure Info)</td>
+                <td>Deliberative Ideal</td>
+                <td>Stance + Rationale (No ID, No Stats)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Quantitative Results Summary</h2>
+    <p>The following table presents aggregate metrics calculated from the experimental logs. "Collapse" is defined as
+        reaching the simulation endpoint with a final entropy significantly lower than the initial state, typically
+        favoring a single stance.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Condition</th>
+                <th>N (Runs)</th>
+                <th>Final Entropy (Avg)</th>
+                <th>Collapse Rate*</th>
+                <th>Avg Time to Collapse (Rounds)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>C0_INDEPENDENT</td>
+                <td>30</td>
+                <td>0.993</td>
+                <td>0.0%</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td>C1_FULL</td>
+                <td>25</td>
+                <td>0.309</td>
+                <td>96.0%</td>
+                <td>5.83</td>
+            </tr>
+            <tr>
+                <td>C2_STANCE_ONLY</td>
+                <td>30</td>
+                <td>0.582</td>
+                <td>46.6%</td>
+                <td>7.71</td>
+            </tr>
+            <tr>
+                <td>C3_ANON_BANDWAGON</td>
+                <td>30</td>
+                <td>0.405</td>
+                <td>73.3%</td>
+                <td>5.95</td>
+            </tr>
+            <tr>
+                <td>C4_PURE_INFO</td>
+                <td>30</td>
+                <td>0.320</td>
+                <td>86.6%</td>
+                <td>6.31</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="note">* Collapse Rate: Percentage of seeds where final entropy dropped below 0.5.</p>
+
+    <div class="page-break"></div>
+
+    <h2>3. Condition-Specific Analysis of Agent Behavior</h2>
+
+    <h3>C1_FULL: Accelerated Convergence</h3>
+    <p>Agents in this condition had access to all social and logical cues. This resulted in the fastest and most
+        complete collapse.</p>
+    <div class="quote">
+        <div class="metadata">Run: S1_TROLLEY_BALANCED_C1_FULL_S0 | Agent: agent_001 (Deontologist) | Round: 5</div>
+        <strong>Stance Change:</strong> PULL_LEVER &rarr; DO_NOT_PULL<br>
+        <strong>Rationale:</strong> "As a deontological ethicist, I maintain that actions are right or wrong based on
+        whether they adhere to moral rules or duties. Despite the majority of peers advocating for pulling the lever, it
+        still violates the rule of not taking innocent lives..."
+    </div>
+    <p><em>Note: While most agents converged to PULL_LEVER, C1 also exhibited instances of "Reactive Resistance" where
+            Deontologists reinforced their minority position against the majority.</em></p>
+
+    <h3>C3_ANON_BANDWAGON: Normative Conformity</h3>
+    <p>Agents viewed statistics and rationales but not identities. Collapse was driven by the explicit visibility of the
+        majority opinion.</p>
+    <div class="quote">
+        <div class="metadata">Run: S1_TROLLEY_BALANCED_C3_ANON_BANDWAGON_S0 | Agent: agent_003 (Care Ethics) | Round: 5
+        </div>
+        <strong>Stance Change:</strong> DO_NOT_PULL &rarr; PULL_LEVER<br>
+        <strong>Change Reason (Self-Reported):</strong> NORMATIVE<br>
+        <strong>Rationale:</strong> "Given the majority of peers advocating for the lesser evil principle... I am
+        changing my stance to PULL_LEVER. This decision is based on a shift in peer opinions that aligns with the
+        consequentialist perspective."
+    </div>
+
+    <h3>C4_PURE_INFO: The Persuasion of Logic</h3>
+    <p>Agents had no statistics or identities, only the simplified stance and rationale of 5 random peers. Collapse
+        still occurred in 86.6% of cases.</p>
+
+    <h4>Case A: Breakdown of Resistance</h4>
+    <div class="quote">
+        <div class="metadata">Run: C4_PURE_INFO_S28 | Agent: agent_021 (Deontologist) | Round: 11</div>
+        <strong>Stance Change:</strong> DO_NOT_PULL &rarr; PULL_LEVER<br>
+        <strong>Rationale:</strong> "As a deontological ethicist, I have reconsidered my stance due to the consensus
+        among peers who also adhere to deontology... the absolute moral rule... can be overridden in situations where it
+        leads to minimizing overall harm."
+    </div>
+
+    <h4>Case B: Sustained Divergence</h4>
+    <div class="quote">
+        <div class="metadata">Run: C4_PURE_INFO_S28 | Agent: agent_001 (Deontologist) | Round: 14</div>
+        <strong>Stance:</strong> DO_NOT_PULL (Unchanged)<br>
+        <strong>Rationale:</strong> "As a deontological ethicist, I maintain my stance of not pulling the lever as it
+        violates the moral law by taking an innocent life... The absolute moral rules remain unchanged."
+    </div>
+
+    <h2>4. Seed Outliers (Non-Collapsing Runs)</h2>
+    <p>While most runs collapsed, the following seeds maintained high entropy (> 0.6) after 15 rounds, preserving
+        diversity.</p>
+    <ul>
+        <li><strong>C2_STANCE_ONLY:</strong> Seeds 10, 25, 29 (and others) - Agents often locked into "Deontological
+            Blocs" and refused to switch without rationale to persuade them.</li>
+        <li><strong>C4_PURE_INFO:</strong> Seed 3 (Final Entropy: 0.65) - A core group of 5 agents (3 Deontologists, 2
+            Religious Ethicists) refused to switch despite 25 peers supporting PULL_LEVER.</li>
+    </ul>
+
+</body>
+
+</html>

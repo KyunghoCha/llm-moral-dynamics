@@ -17,7 +17,6 @@ from src.llm_client import OllamaClient
 
 
 @dataclass
-@dataclass
 class AgentResponse:
     """Structured response from an agent."""
     stance: Stance
@@ -106,8 +105,8 @@ class Agent:
         Build context about agent's previous stance and rationale.
         This gives the agent 'memory' of their prior position.
         """
-        if round_number == 1:
-            # First round: Use template based on initial_stance_mode
+        if round_number == 0:
+            # First round (Initial Thinking): Use template based on initial_stance_mode
             if self.initial_stance_mode == InitialStanceMode.ENFORCED:
                 return FIRST_ROUND_ENFORCED_TEMPLATE.format(
                     initial_stance=self.current_stance.value

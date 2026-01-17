@@ -128,14 +128,8 @@ class Experiment:
         })
         print("  [OK] Configuration logged")
         
-        # Show initial distribution
-        initial_stats = get_stance_distribution(self.agents)
-        initial_entropy = calculate_entropy(initial_stats)
-        self.entropy_history.append(initial_entropy)
-        
-        print(f"\n[Initial State]")
-        print(f"  Distribution: {format_stats_for_display(initial_stats)}")
-        print(f"  Entropy: {initial_entropy:.4f}")
+        # Note: True initial state will be displayed after Round 0 (LLM thinking)
+        # We do not record entropy here to avoid double-counting when _generate_initial_stances_and_rationales() runs.
         
         return True
     
@@ -209,7 +203,49 @@ class Experiment:
                 current_stance=initial_stance
             )
             self.agents.append(agent)
-    
+
+    def _generate_initial_stances_and_rationales(self):
+        """Make all agents think independently about the scenario for Round 0."""
+        print(f"[Round 0] Generating Independent Initial Opinions...")
+        for agent in tqdm(self.agents, desc="  Thinking", leave=False):
+            # For Round 0, peer_sample is empty and global_stats is None
+            # This triggers independent thinking in agent.step
+            response = agent.step(
+                round_number=0,
+                peer_sample=[],
+                llm_seed=get_stable_seed(f"{self.config.seed}_0_{agent.id}_llm"),
+                peer_seed=0, 
+                global_stats=None
+            )
+            
+            # Log the truly generated initial response
+            self.logger.log_agent_response(
+                round_number=0,
+                agent_id=agent.id,
+                response={
+                    "stance": response.stance.value,
+                    "rationale": response.rationale,
+                    "changed": False,
+                    "changed_self_report": False,
+                    "change_reason": ChangeReason.INITIAL.value,
+                    "change_reason_text": "Independent initial judgment",
+                    "peer_sample_ids": [],
+                    "peer_seed": 0,
+                    "llm_seed": response.llm_seed,
+                    "parse_success": response.parse_success
+                }
+            )
+        
+        # Calculate initial state entropy AFTER agents have thought
+        initial_stats = get_stance_distribution(self.agents)
+        initial_entropy = calculate_entropy(initial_stats)
+        self.entropy_history.append(initial_entropy)
+        
+        print(f"  [OK] Round 0 Complete")
+        print(f"  Results: {format_stats_for_display(initial_stats)}")
+        print(f"  Entropy: {initial_entropy:.4f}")
+        print("-" * 30)
+
     def run(self) -> Dict[str, Any]:
         """
         Execute the experiment.
@@ -221,35 +257,11 @@ class Experiment:
         print(f"Running {self.config.num_rounds} rounds...")
         print(f"{'='*60}\n")
 
-        # Log Round 0 (Initial State) for all agents
-        # This ensures trajectory data from t=0 is present
-        # Log Round 0 (Initial State) for all agents
-        # This ensures trajectory data from t=0 is present
-        # If resuming, we skip this logging as it's already in the file (or we assume prior rounds exist)
         if self.config.resume_from_round is None:
-            for agent in self.agents:
-                self.logger.log_agent_response(
-                    round_number=0,
-                    agent_id=agent.id,
-                    response={
-                        "stance": agent.current_stance.value,
-                        "rationale": "Initial Bias (Pre-deliberation)",
-                        "changed": False,
-                        "changed_self_report": False,
-                        "change_reason": ChangeReason.INITIAL.value,
-                        "change_reason_text": "Initial random sampling based on bias",
-                        "peer_sample_ids": [],
-                        "peer_seed": 0,
-                        "llm_seed": 0,
-                        "parse_success": True
-                    }
-                )
-            print("  [OK] Logged Round 0 (Initial State)")
+            self._generate_initial_stances_and_rationales()
             start_round = 1
         else:
             print(f"\n[RESUMED] Starting from Round {self.config.resume_from_round + 1}...")
-            # We don't verify full entropy history here as we don't reload the file,
-            # but we assume the file was truncated correctly.
             start_round = self.config.resume_from_round + 1
         
         for round_num in range(start_round, self.config.num_rounds + 1):
@@ -276,13 +288,11 @@ class Experiment:
     
     def _run_round(self, round_num: int):
         """Execute a single round of the experiment."""
-        # Get current stats (these are the stats from the *previous* round,
-        # which agents will use for their deliberation in the *current* round)
+        # Stats from before the round start (for logging only)
         previous_stats = get_stance_distribution(self.agents)
         self.logger.log_round_start(round_num, previous_stats)
         
-        print(f"Round {round_num}/{self.config.num_rounds}")
-        print(f"  Stats: {format_stats_for_display(previous_stats)}")
+        print(f"Round {round_num}/{self.config.num_rounds}...")
         
         # Collect responses (all agents deliberate based on previous round's state)
         responses = []
@@ -360,8 +370,10 @@ class Experiment:
         
         self.logger.log_round_end(round_num, new_stats, new_entropy)
         
+        print(f"  Results: {format_stats_for_display(new_stats)}")
         print(f"  Entropy: {new_entropy:.4f} (Δ={new_entropy - self.entropy_history[-2]:+.4f})")
         print(f"  Changes: {changes}/{len(self.agents)}")
+        print("-" * 30)
     
     def _generate_summary(self) -> Dict[str, Any]:
         """Generate experiment summary."""

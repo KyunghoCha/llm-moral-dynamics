@@ -1,0 +1,48 @@
+======================================================================
+EXPERIMENT ANALYSIS REPORT - Phase 3
+======================================================================
+
+## Summary by Condition
+----------------------------------------------------------------------
+Condition                     N   Init H  Final H  Delta H      TTC
+----------------------------------------------------------------------
+C0_INDEPENDENT                3    0.981    0.967   -0.013      N/A
+C1_FULL                       3    0.986    0.451   -0.535      3.5
+C2_STANCE_ONLY                3    0.961    0.634   -0.327      4.0
+C3_ANON_BANDWAGON             3    0.982    0.344   -0.637      4.7
+C4_PURE_INFO                  3    0.989    0.306   -0.683      4.7
+----------------------------------------------------------------------
+
+## Detailed Analysis
+
+### C0_INDEPENDENT
+  - Experiments: 3
+  - Final Entropy: 0.9674 (SD=0.0428) [95% CI: 0.919, 1.016]
+
+### C1_FULL
+  - Experiments: 3
+  - Final Entropy: 0.4511 (SD=0.5071) [95% CI: -0.123, 1.025]
+  - Time to Collapse: 3.50 rounds [95% CI: 2.52, 4.48] (2/3 collapsed)
+
+### C2_STANCE_ONLY
+  - Experiments: 3
+  - Final Entropy: 0.6343 (SD=0.1580) [95% CI: 0.455, 0.813]
+  - Time to Collapse: 4.00 rounds (1/3 collapsed)
+
+### C3_ANON_BANDWAGON
+  - Experiments: 3
+  - Final Entropy: 0.3444 (SD=0.1293) [95% CI: 0.198, 0.491]
+  - Time to Collapse: 4.67 rounds [95% CI: 2.05, 7.28] (3/3 collapsed)
+
+### C4_PURE_INFO
+  - Experiments: 3
+  - Final Entropy: 0.3059 (SD=0.0823) [95% CI: 0.213, 0.399]
+  - Time to Collapse: 4.67 rounds [95% CI: 2.94, 6.40] (3/3 collapsed)
+
+## Key Findings
+
+- C1_FULL collapses faster than C4_PURE_INFO (TTC: 3.5 vs 4.7)
+  -> Suggests Bandwagon/Authority effects accelerate collapse
+- Baseline (C0) entropy change: -0.0131
+
+======================================================================
