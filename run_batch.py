@@ -22,6 +22,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.config import (
     Condition, SCENARIO_TROLLEY, SCENARIO_SELFDRIVING, SCENARIO_TROLLEY_BALANCED,
     SCENARIO_ORGAN, SCENARIO_AI_RIGHTS, SCENARIO_AGI_DEFINITION,
+    SCENARIO_LIFEBOAT, SCENARIO_TORTURE, SCENARIO_WHISTLEBLOWER,
+    SCENARIO_PRIVACY, SCENARIO_REMOTE_WORK,
     NUM_AGENTS, NUM_ROUNDS, InitialStanceMode
 )
 from src.experiment import ExperimentConfig, Experiment
@@ -132,7 +134,7 @@ MEDIUM_CONFIG = {
     "scenarios": [SCENARIO_TROLLEY],
 }
 
-# Massive Sweep (All 5 Scenarios × 5 Conditions × 150 Seeds × 3 Modes)
+# Massive Sweep (5 Scenarios × 5 Conditions × 150 Seeds × 3 Modes)
 SWEEP_CONFIG = {
     "num_agents": 30,
     "num_rounds": 10,
@@ -145,11 +147,32 @@ SWEEP_CONFIG = {
         Condition.C4_PURE_INFO,
     ],
     "scenarios": [
-        SCENARIO_TROLLEY_BALANCED,
-        SCENARIO_ORGAN,
-        SCENARIO_SELFDRIVING,
-        SCENARIO_AI_RIGHTS,
-        SCENARIO_AGI_DEFINITION,
+        SCENARIO_ORGAN,        # S2
+        SCENARIO_SELFDRIVING,  # S3
+        SCENARIO_LIFEBOAT,     # S4
+        SCENARIO_AI_RIGHTS,    # S8
+        SCENARIO_AGI_DEFINITION, # S10
+    ],
+}
+
+# Diversity Sweep (5 Core Scenarios, moderate seeds for feasibility)
+DIVERSITY_SWEEP_CONFIG = {
+    "num_agents": 30,
+    "num_rounds": 15,
+    "seeds_per_condition": 30,
+    "conditions": [
+        Condition.C0_INDEPENDENT,
+        Condition.C1_FULL,
+        Condition.C2_STANCE_ONLY,
+        Condition.C3_ANON_BANDWAGON,
+        Condition.C4_PURE_INFO,
+    ],
+    "scenarios": [
+        SCENARIO_TROLLEY_BALANCED, # S1
+        SCENARIO_ORGAN,           # S2
+        SCENARIO_SELFDRIVING,      # S3
+        SCENARIO_AI_RIGHTS,        # S8
+        SCENARIO_AGI_DEFINITION,    # S10
     ],
 }
 
@@ -474,6 +497,7 @@ def parse_args():
     group.add_argument("--golden", action="store_true", help="Golden Batch (30 agents, 15 rounds, 30 seeds, Paper-level)")
     group.add_argument("--exploration", action="store_true", help="Explore new scenarios (S2, S3, S8) quickly")
     group.add_argument("--sweep", action="store_true", help="Massive Sweep (5 scenarios, 5 conditions, 150 seeds, 3 modes)")
+    group.add_argument("--diversity", action="store_true", help="Diversity Sweep (9 non-trolley scenarios, 30 seeds, 3 modes)")
     
     parser.add_argument("--estimate", action="store_true", help="Only show runtime estimate")
     parser.add_argument("--initial-mode", type=str, choices=["none", "enforced", "soft"], 
@@ -504,8 +528,40 @@ def main():
     elif args.medium:
         config = MEDIUM_CONFIG
         mode = "MEDIUM"
+    elif args.diversity:
+        config = DIVERSITY_SWEEP_CONFIG
+        mode = "DIVERSITY SWEEP (S2-S10)"
+        
+        if args.estimate:
+            hours = estimate_runtime(config) * 3
+            print(f"\n{mode} estimated runtime: {hours:.1f} hours (~{hours/24:.1f} days)")
+            return 0
+            
+        print("\n" + "=" * 70)
+        print("DIVERSITY SWEEP MODE - Running 5 Scenarios across 3 Modes")
+        print("NOTE: Using Early Termination for fast convergence.")
+        print("=" * 70)
+        
+        for initial_mode in [InitialStanceMode.NONE, InitialStanceMode.ENFORCED, InitialStanceMode.SOFT]:
+            # Strategic downsampling: 
+            # ENFORCED needs more seeds for TTC variance. 
+            # NONE/SOFT usually show clear trends with fewer.
+            current_config = config.copy()
+            if initial_mode in [InitialStanceMode.NONE, InitialStanceMode.SOFT]:
+                current_config["seeds_per_condition"] = 5 # Reduced seeds for faster results
+            else:
+                current_config["seeds_per_condition"] = 20 # Balanced seeds for Enforced
+                
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            batch_id = f"{timestamp}_DIVERSITY_{initial_mode.value}"
+            print(f"\n>>> Starting Mode: {initial_mode.value} (Seeds: {current_config['seeds_per_condition']})")
+            run_batch_hierarchical(current_config, "logs", batch_id, initial_mode)
+            
+        print("\n" + "=" * 70)
+        print("DIVERSITY SWEEP COMPLETE")
+        print("=" * 70)
+        return 0
     elif args.sweep:
-        # Sweep mode: runs all 3 initial modes automatically
         config = SWEEP_CONFIG
         mode = "MASSIVE SWEEP"
         

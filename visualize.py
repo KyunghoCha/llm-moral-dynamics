@@ -474,10 +474,30 @@ def generate_all_plots(experiments: List[Dict], log_dir: str = "logs",
 
 
 def load_batch_experiments(batch_path: str) -> List[Dict]:
-    """Load experiments from a batch results file."""
+    """Load experiments from a batch results file, hydrating with full details from individual logs."""
+    batch_dir = Path(batch_path).parent
     with open(batch_path, 'r', encoding='utf-8') as f:
         batch = json.load(f)
-    return [e for e in batch.get("experiments", []) if e.get("status") == "SUCCESS"]
+    
+    experiments = []
+    for entry in batch.get("experiments", []):
+        if entry.get("status") != "SUCCESS":
+            continue
+            
+        # Try to find the individual summary file
+        exp_id = entry.get("experiment_id")
+        if exp_id:
+            summary_path = batch_dir / f"{exp_id}_summary.json"
+            if summary_path.exists():
+                with open(summary_path, 'r', encoding='utf-8') as f:
+                    experiments.append(json.load(f))
+            else:
+                # Fallback to batch entry if individual file missing
+                experiments.append(entry)
+        else:
+            experiments.append(entry)
+            
+    return experiments
 
 
 def load_all_experiments(log_dir: str = "logs") -> List[Dict]:

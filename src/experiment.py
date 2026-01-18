@@ -267,6 +267,15 @@ class Experiment:
         
         for round_num in range(start_round, self.config.num_rounds + 1):
             self._run_round(round_num)
+            
+            # --- EARLY TERMINATION LOGIC ---
+            # If entropy is low enough, the group has effectively collapsed/converged.
+            # 0.1 allowance for 30 agents means it triggers even if 1-2 agents hold out.
+            current_entropy = self.entropy_history[-1]
+            if current_entropy < 0.1: 
+                print(f"\n[EARLY TERMINATION] Entropy is {current_entropy:.4f}. Consensus reached.")
+                break
+            # -------------------------------
         
         # Calculate final summary
         summary = self._generate_summary()
