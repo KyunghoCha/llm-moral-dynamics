@@ -464,7 +464,10 @@ def run_batch_hierarchical(config: dict, output_dir: str, batch_id: str, initial
                     return
                     
                 except Exception as e:
-                    print(f"  [ERROR] {e}")
+                    import traceback
+                    print(f"\n  [ERROR] Experiment crashed!")
+                    traceback.print_exc()
+                    print("  [WARNING] Skipping to next seed due to crash...")
     
     elapsed = time.time() - start_time
     print("\n" + "=" * 70)

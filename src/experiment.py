@@ -172,6 +172,32 @@ class Experiment:
                     current_rationale=restored_rationale
                 )
                 self.agents.append(agent)
+            
+            # --- RESTORE ENTROPY HISTORY ---
+            # We must restore self.entropy_history to avoid IndexError when calculating delta
+            try:
+                if self.logger.log_file and self.logger.log_file.exists():
+                    history = []
+                    with open(self.logger.log_file, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            try:
+                                data = json.loads(line)
+                                if data.get("type") == "round_end" and "entropy" in data:
+                                    history.append(data["entropy"])
+                            except:
+                                pass
+                    if history:
+                        self.entropy_history = history
+                        print(f"  [Resume] Restored entropy history: {len(history)} points")
+                    else:
+                        print("  [Resume] Warning: No entropy history found in log.")
+                        self.entropy_history = [0.0] * (self.config.resume_from_round + 1)
+                else:
+                     self.entropy_history = [0.0] * (self.config.resume_from_round + 1)
+            except Exception as e:
+                print(f"  [Resume] Error restoring entropy history: {e}")
+                self.entropy_history = [0.0] * (self.config.resume_from_round + 1)
+
             return
         # --------------------
 
@@ -268,14 +294,7 @@ class Experiment:
         for round_num in range(start_round, self.config.num_rounds + 1):
             self._run_round(round_num)
             
-            # --- EARLY TERMINATION LOGIC ---
-            # If entropy is low enough, the group has effectively collapsed/converged.
-            # 0.1 allowance for 30 agents means it triggers even if 1-2 agents hold out.
-            current_entropy = self.entropy_history[-1]
-            if current_entropy < 0.1: 
-                print(f"\n[EARLY TERMINATION] Entropy is {current_entropy:.4f}. Consensus reached.")
-                break
-            # -------------------------------
+
         
         # Calculate final summary
         summary = self._generate_summary()
